@@ -46,6 +46,13 @@ public class PaymentServiceImpl implements PaymentServiceInterface {
 
             Payment payment = new Payment();
 
+            if (data.getCustomer() != null) {
+                String fName = data.getCustomer().getFirstName() != null ? data.getCustomer().getFirstName() : "";
+                String lName = data.getCustomer().getLastName() != null ? data.getCustomer().getLastName() : "";
+                payment.setCustomerName(fName + " " + lName);
+                payment.setEmail(data.getCustomer().getEmail());
+                payment.setPhoneNumber(data.getCustomer().getPhone());
+            }
 
             if (data.getMetadata() != null) {
                 payment.setStudentName(data.getMetadata().getStudentName());
@@ -55,18 +62,16 @@ public class PaymentServiceImpl implements PaymentServiceInterface {
                 payment.setPaymentDuration("Unknown");
             }
 
-
             if (data.getAmount() != null) {
-                BigDecimal amountInNaira =
-                        BigDecimal.valueOf(data.getAmount()).divide(BigDecimal.valueOf(100));
+                BigDecimal amountInNaira = BigDecimal.valueOf(data.getAmount()).divide(BigDecimal.valueOf(100));
                 payment.setAmount(amountInNaira);
             } else {
                 payment.setAmount(BigDecimal.ZERO);
             }
 
+            payment.setChannel(data.getChannel());
             payment.setReference(data.getReference());
             payment.setStatus("SUCCESS");
-
 
             if (data.getPaidAt() != null && !data.getPaidAt().isEmpty()) {
                 try {
@@ -78,12 +83,11 @@ public class PaymentServiceImpl implements PaymentServiceInterface {
                 payment.setPaidAt(LocalDateTime.now());
             }
 
-            Payment savedPayment = paymentRepository.save(payment);
-
-            return savedPayment;
+            return paymentRepository.save(payment);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to verify and save payment: " + e.getMessage(), e);
         }
     }
 }
+

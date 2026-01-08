@@ -17,32 +17,55 @@ public class PaystackResponse {
 
     @Data
     public static class PaystackData {
-
         private String reference;
         private Integer amount;
+        private String channel;
 
         @JsonProperty("paid_at")
         private String paidAt;
+
+        private Customer customer;
 
         @JsonDeserialize(using = MetadataDeserializer.class)
         private Metadata metadata;
     }
 
     @Data
-    public static class Metadata {
-        private String studentName;
-        private String paymentDuration;
+    public static class Customer {
+        @JsonProperty("first_name")
+        private String firstName;
+
+        @JsonProperty("last_name")
+        private String lastName;
+
+        private String email;
+        private String phone;
     }
 
+    @Data
+    public static class Metadata {
+        @JsonProperty("child_s_full_name")
+        private String studentName;
+
+        @JsonProperty("duration_of_payment")
+        private String paymentDuration;
+    }
 
     public static class MetadataDeserializer extends JsonDeserializer<Metadata> {
         @Override
         public Metadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-            String value = p.getText();
-            if (value == null || value.trim().isEmpty()) {
-                return null;
+            try {
+                return p.getCodec().readTree(p).isObject() ?
+                        p.getCodec().treeToValue(ctxt.readTree(p), Metadata.class) : null;
+            } catch (Exception e) {
+                try {
+                    String raw = p.getText();
+                    if (raw == null || raw.isEmpty()) return null;
+                    return p.getCodec().readValue(p, Metadata.class);
+                } catch (Exception ex) {
+                    return null;
+                }
             }
-            return p.readValueAs(Metadata.class);
         }
     }
 }
